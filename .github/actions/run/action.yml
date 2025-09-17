@@ -1,0 +1,19 @@
+name: "Run Databricks CLI Command"
+description: "Install Databricks CLI and run custom command"
+inputs:
+  command:
+    description: "Databricks CLI command to run (e.g., 'bundle validate --target dev')"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install Databricks CLI
+      run: pip install databricks-cli databricks-sdk
+
+    - name: Run Databricks Command
+      run: databricks ${{ inputs.command }}
