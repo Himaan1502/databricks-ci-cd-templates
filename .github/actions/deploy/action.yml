@@ -1,9 +1,11 @@
 name: "Deploy Databricks Bundle"
 description: "Deploy a Databricks Asset Bundle to a target environment"
+
 inputs:
   target:
     description: "Deployment target (dev/uat/prod)"
     required: true
+
 runs:
   using: "composite"
   steps:
@@ -14,6 +16,8 @@ runs:
 
     - name: Install Databricks CLI
       run: pip install databricks-cli databricks-sdk
+      shell: bash   # 👈 required
 
     - name: Deploy Bundle
       run: databricks bundle deploy --target ${{ inputs.target }}
+      shell: bash   # 👈 required
