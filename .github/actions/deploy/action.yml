@@ -1,23 +1,36 @@
 name: "Deploy Databricks Bundle"
-description: "Deploy a Databricks Asset Bundle to a target environment"
+description: "Reusable action to validate and deploy Databricks Asset Bundles"
 
 inputs:
-  target:
-    description: "Deployment target (dev/uat/prod)"
+  env-file:
+    description: "Path to environment variable file (e.g. dev.txt)"
     required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.10"
+    - name: Load environment variables
+      shell: bash
+      run: |
+        set -a
+        source ${{ inputs.env-file }}
+        set +a
 
-    - name: Install Databricks CLI
-      run: pip install databricks-cli databricks-sdk
-      shell: bash   # 👈 required
+    - name: Install latest Databricks CLI
+      shell: bash
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        databricks --version
+        pip install wheel
 
-    - name: Deploy Bundle
-      run: databricks bundle deploy --target ${{ inputs.target }}
-      shell: bash   # 👈 required
+    - name: Validate workspace access
+      shell: bash
+      run: databricks workspace list /
+
+    - name: Validate bundle
+      shell: bash
+      run: databricks bundle validate --target $TARGET
+
+    - name: Deploy bundle
+      shell: bash
+      run: databricks bundle deploy --target $TARGET
