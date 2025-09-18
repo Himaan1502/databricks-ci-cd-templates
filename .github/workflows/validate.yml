@@ -6,11 +6,6 @@ on:
       environment:
         required: true
         type: string
-    secrets:
-      DATABRICKS_HOST:
-        required: true
-      DATABRICKS_TOKEN:
-        required: true
 
 jobs:
   validate:
@@ -19,10 +14,15 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Validate Bundle
+      - name: Checkout Global Templates
+        uses: actions/checkout@v4
+        with:
+          repository: Himaan1502/databricks-ci-cd-templates
+          ref: main
+          path: ./.github/templates
+
+      - name: Use Run Action for Validation
         uses: ./.github/actions/run
         with:
           command: "bundle validate --target ${{ inputs.environment }}"
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          env-file: env/${{ inputs.environment }}.txt
