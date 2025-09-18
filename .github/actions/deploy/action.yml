@@ -16,12 +16,25 @@ runs:
         source ${{ inputs.env-file }}
         set +a
 
+    - name: Azure Login (using SPN / Managed Identity creds from GitHub Secrets)
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
     - name: Install latest Databricks CLI
       shell: bash
       run: |
         curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
         databricks --version
         pip install wheel
+
+    - name: Configure Databricks with AAD token
+      shell: bash
+      run: |
+        databricks configure --aad-token --host $DATABRICKS_HOST
 
     - name: Validate workspace access
       shell: bash
