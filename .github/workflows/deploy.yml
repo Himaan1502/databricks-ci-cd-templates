@@ -14,7 +14,7 @@ jobs:
       - name: Checkout global templates
         uses: actions/checkout@v4
         with:
-          repository: your-org/databricks-global-actions
+          repository: Himaan1502/databricks-ci-cd-templates
           ref: main
 
       - name: Use Deploy Action
