@@ -1,4 +1,4 @@
-name: Deploy Databricks Bundle
+name: "Reusable Deploy Workflow"
 
 on:
   workflow_call:
@@ -6,23 +6,18 @@ on:
       environment:
         required: true
         type: string
-    secrets:
-      DATABRICKS_HOST:
-        required: true
-      DATABRICKS_TOKEN:
-        required: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout global templates
         uses: actions/checkout@v4
-
-      - name: Deploy Bundle
-        uses: ./.github/actions/deploy
         with:
-          target: ${{ inputs.environment }}
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          repository: your-org/databricks-global-actions
+          ref: main
+
+      - name: Use Deploy Action
+        uses: ./github/actions/deploy
+        with:
+          env-file: env/${{ inputs.environment }}.txt
