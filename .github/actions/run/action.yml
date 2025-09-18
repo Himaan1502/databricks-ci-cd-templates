@@ -1,19 +1,42 @@
 name: "Run Databricks CLI Command"
 description: "Install Databricks CLI and run custom command"
+
 inputs:
   command:
     description: "Databricks CLI command to run (e.g., 'bundle validate --target dev')"
     required: true
+  env-file:
+    description: "Path to environment variable file (e.g. dev.txt)"
+    required: true
+
 runs:
   using: "composite"
   steps:
-    - name: Setup Python
-      uses: actions/setup-python@v5
+    - name: Load environment variables
+      shell: bash
+      run: |
+        set -a
+        source ${{ inputs.env-file }}
+        set +a
+
+    - name: Azure Login
+      uses: azure/login@v1
       with:
-        python-version: "3.10"
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Install Databricks CLI
-      run: pip install databricks-cli databricks-sdk
+      shell: bash
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        databricks --version
+
+    - name: Configure Databricks with AAD token
+      shell: bash
+      run: databricks configure --aad-token --host $DATABRICKS_HOST
 
     - name: Run Databricks Command
+      shell: bash
       run: databricks ${{ inputs.command }}
