@@ -1,0 +1,25 @@
+name: "Databricks CI/CD"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Azure OIDC Login
+        uses: ./.github/actions/login
+        with:
+          environment: ${{ inputs.environment }}
+
+      - name: Deploy Bundle
+        uses: ./.github/actions/deploy
+        with:
+          target: ${{ inputs.environment }}
