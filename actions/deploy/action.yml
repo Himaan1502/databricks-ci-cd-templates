@@ -1,0 +1,27 @@
+name: "Deploy Databricks Bundle"
+description: "Deploy a Databricks Asset Bundle to the target environment"
+inputs:
+  target:
+    description: "Deployment target (dev/uat/prod)"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install Databricks CLI + uv
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        pip install wheel uv
+        databricks --version
+
+    - name: Load Environment Config
+      shell: bash
+      run: |
+        source env/${{ inputs.target }}.txt
+        echo "TARGET=$TARGET" >> $GITHUB_ENV
+        echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
+
+    - name: Deploy Bundle
+      shell: bash
+      run: |
+        cd DBX_Template
+        databricks bundle deploy --target "$TARGET"
