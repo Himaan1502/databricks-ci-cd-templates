@@ -24,14 +24,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Azure OIDC Login
-        uses: Himaan1502/databricks-ci-cd-templates/actions/login@main
+        uses: ./actions/login
         with:
           environment: ${{ inputs.environment }}
-          client-id: ${{ inputs['client-id'] }}
-          tenant-id: ${{ inputs['tenant-id'] }}
-          subscription-id: ${{ inputs['subscription-id'] }}
+          client-id: ${{ inputs.client-id }}
+          tenant-id: ${{ inputs.tenant-id }}
+          subscription-id: ${{ inputs.subscription-id }}
 
       - name: Deploy Bundle
-        uses: Himaan1502/databricks-ci-cd-templates/actions/deploy@main
+        uses: ./actions/deploy
         with:
           target: ${{ inputs.environment }}
