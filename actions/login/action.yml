@@ -24,6 +24,5 @@ runs:
         tenant-id: ${{ inputs.tenant-id }}
         subscription-id: ${{ inputs.subscription-id }}
 
-    - name: Show logged in account (optional debug)
-      run: |
-        az account show
+    - name: Optional debug - show logged in account
+      run: az account show
