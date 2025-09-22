@@ -25,13 +25,37 @@ runs:
           echo "Environment file env/${{ inputs.target }}.txt not found!"
           exit 1
         fi
+        
+        # Source the environment file and export all variables
+        set -a
         source env/${{ inputs.target }}.txt
+        set +a
+        
+        # Export to GitHub environment for subsequent steps
         echo "TARGET=$TARGET" >> $GITHUB_ENV
         echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
+        
+        # If you have Azure-specific auth in your env files
+        if [ ! -z "$AZURE_CLIENT_ID" ]; then
+          echo "ARM_CLIENT_ID=$AZURE_CLIENT_ID" >> $GITHUB_ENV
+        fi
+        if [ ! -z "$AZURE_TENANT_ID" ]; then
+          echo "ARM_TENANT_ID=$AZURE_TENANT_ID" >> $GITHUB_ENV
+        fi
+        if [ ! -z "$AZURE_SUBSCRIPTION_ID" ]; then
+          echo "ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID" >> $GITHUB_ENV
+        fi
+
+    - name: Validate Bundle
+      shell: bash
+      run: |
+        echo "Validating Databricks Bundle for ${{ inputs.target }}..."
+        cd DBX_Template
+        databricks bundle validate --target "${{ inputs.target }}"
 
     - name: Deploy Databricks Bundle
       shell: bash
       run: |
-        echo "Deploying Databricks Bundle to $TARGET..."
+        echo "Deploying Databricks Bundle to ${{ inputs.target }}..."
         cd DBX_Template
-        databricks bundle deploy --target "$TARGET"
+        databricks bundle deploy --target "${{ inputs.target }}" --force-lock
