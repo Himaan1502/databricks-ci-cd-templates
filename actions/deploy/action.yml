@@ -1,6 +1,5 @@
 name: "Deploy Databricks Bundle"
 description: "Deploy a Databricks Asset Bundle to the target environment"
-
 inputs:
   target:
     description: "Deployment target (dev/uat/prod)"
@@ -16,46 +15,48 @@ runs:
         curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
         pip install --upgrade pip wheel uv
         databricks --version
-
+        
     - name: Load Environment Config
       shell: bash
       run: |
+        # Use the working repo path (default to current directory if not set)
+        REPO_PATH=${WORKING_REPO_PATH:-"."}
+        
         echo "Loading environment variables for ${{ inputs.target }}..."
-        if [ ! -f "env/${{ inputs.target }}.txt" ]; then
-          echo "Environment file env/${{ inputs.target }}.txt not found!"
+        if [ ! -f "$REPO_PATH/env/${{ inputs.target }}.txt" ]; then
+          echo "Environment file $REPO_PATH/env/${{ inputs.target }}.txt not found!"
+          echo "Available files in $REPO_PATH/env/:"
+          ls -la "$REPO_PATH/env/" || echo "env directory not found"
           exit 1
         fi
         
-        # Source the environment file and export all variables
-        set -a
-        source env/${{ inputs.target }}.txt
-        set +a
+        # Load all variables from the env file
+        while IFS='=' read -r key value || [ -n "$key" ]; do
+          # Skip empty lines and comments
+          [[ $key =~ ^[[:space:]]*# ]] && continue
+          [[ -z "$key" ]] && continue
+          
+          # Remove any trailing whitespace and export to GitHub environment
+          key=$(echo "$key" | xargs)
+          value=$(echo "$value" | xargs)
+          echo "${key}=${value}" >> $GITHUB_ENV
+        done < "$REPO_PATH/env/${{ inputs.target }}.txt"
         
-        # Export to GitHub environment for subsequent steps
-        echo "TARGET=$TARGET" >> $GITHUB_ENV
-        echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
+        echo "Successfully loaded environment variables from $REPO_PATH/env/${{ inputs.target }}.txt"
         
-        # If you have Azure-specific auth in your env files
-        if [ ! -z "$AZURE_CLIENT_ID" ]; then
-          echo "ARM_CLIENT_ID=$AZURE_CLIENT_ID" >> $GITHUB_ENV
-        fi
-        if [ ! -z "$AZURE_TENANT_ID" ]; then
-          echo "ARM_TENANT_ID=$AZURE_TENANT_ID" >> $GITHUB_ENV
-        fi
-        if [ ! -z "$AZURE_SUBSCRIPTION_ID" ]; then
-          echo "ARM_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID" >> $GITHUB_ENV
-        fi
-
-    - name: Validate Bundle
-      shell: bash
-      run: |
-        echo "Validating Databricks Bundle for ${{ inputs.target }}..."
-        cd DBX_Template
-        databricks bundle validate --target "${{ inputs.target }}"
-
     - name: Deploy Databricks Bundle
       shell: bash
       run: |
-        echo "Deploying Databricks Bundle to ${{ inputs.target }}..."
-        cd DBX_Template
-        databricks bundle deploy --target "${{ inputs.target }}" --force-lock
+        # Use the working repo path
+        REPO_PATH=${WORKING_REPO_PATH:-"."}
+        
+        echo "Deploying Databricks Bundle to $TARGET..."
+        if [ ! -d "$REPO_PATH/DBX_Template" ]; then
+          echo "DBX_Template directory not found at $REPO_PATH/DBX_Template!"
+          echo "Available directories in $REPO_PATH:"
+          ls -la "$REPO_PATH" || echo "Working repo path not found"
+          exit 1
+        fi
+        
+        cd "$REPO_PATH/DBX_Template"
+        databricks bundle deploy --target "$TARGET"
