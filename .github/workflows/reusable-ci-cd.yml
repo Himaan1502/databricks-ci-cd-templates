@@ -6,19 +6,22 @@ on:
       environment:
         required: true
         type: string
+    secrets:
       client-id:
         required: true
-        type: string
       tenant-id:
         required: true
-        type: string
       subscription-id:
         required: true
-        type: string
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read   # Required to checkout code
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}  # GitHub Environment for protection rules
     steps:
       - name: Checkout Working Repo
         uses: actions/checkout@v4
@@ -27,9 +30,9 @@ jobs:
         uses: ./actions/login
         with:
           environment: ${{ inputs.environment }}
-          client-id: ${{ inputs.client-id }}
-          tenant-id: ${{ inputs.tenant-id }}
-          subscription-id: ${{ inputs.subscription-id }}
+          client-id: ${{ secrets.client-id }}
+          tenant-id: ${{ secrets.tenant-id }}
+          subscription-id: ${{ secrets.subscription-id }}
 
       - name: Deploy Bundle
         uses: ./actions/deploy
