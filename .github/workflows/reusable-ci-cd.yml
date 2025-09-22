@@ -1,5 +1,4 @@
 name: "Databricks CI/CD"
-
 on:
   workflow_call:
     inputs:
@@ -25,16 +24,27 @@ jobs:
     steps:
       - name: Checkout Working Repo
         uses: actions/checkout@v4
-
+        with:
+          path: working-repo
+          
+      - name: Checkout Template Repo (for actions)
+        uses: actions/checkout@v4
+        with:
+          repository: Himaan1502/databricks-ci-cd-templates
+          path: template-repo
+          ref: main
+          
       - name: Azure OIDC Login
-        uses: ./actions/login
+        uses: ./template-repo/actions/login
         with:
           environment: ${{ inputs.environment }}
           client-id: ${{ secrets.client-id }}
           tenant-id: ${{ secrets.tenant-id }}
           subscription-id: ${{ secrets.subscription-id }}
-
+          
       - name: Deploy Bundle
-        uses: ./actions/deploy
+        uses: ./template-repo/actions/deploy
         with:
           target: ${{ inputs.environment }}
+        env:
+          WORKING_REPO_PATH: ./working-repo
