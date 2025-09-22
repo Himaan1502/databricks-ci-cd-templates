@@ -11,15 +11,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout Working Repo
         uses: actions/checkout@v4
 
       - name: Azure OIDC Login
-        uses: ./.github/actions/login
+        uses: Himaan1502/databricks-ci-cd-templates/actions/login@main
         with:
           environment: ${{ inputs.environment }}
 
       - name: Deploy Bundle
-        uses: ./.github/actions/deploy
+        uses: Himaan1502/databricks-ci-cd-templates/actions/deploy@main
         with:
           target: ${{ inputs.environment }}
