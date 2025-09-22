@@ -1,49 +1,27 @@
 name: "Deploy Databricks Bundle"
-description: "Reusable action to validate and deploy Databricks Asset Bundles"
-
+description: "Deploy a Databricks Asset Bundle to the target environment"
 inputs:
-  env-file:
-    description: "Path to environment variable file (e.g. dev.txt)"
+  target:
+    description: "Deployment target (dev/uat/prod)"
     required: true
-
 runs:
   using: "composite"
   steps:
-    - name: Load environment variables
-      shell: bash
-      run: |
-        set -a
-        source ${{ inputs.env-file }}
-        set +a
-
-    - name: Azure Login (using SPN / Managed Identity creds from GitHub Secrets)
-      uses: azure/login@v1
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - name: Install latest Databricks CLI
-      shell: bash
+    - name: Install Databricks CLI + uv
       run: |
         curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        pip install wheel uv
         databricks --version
-        pip install wheel
 
-    - name: Configure Databricks with AAD token
+    - name: Load Environment Config
       shell: bash
       run: |
-        databricks configure --aad-token --host $DATABRICKS_HOST
+        source env/${{ inputs.target }}.txt
+        echo "TARGET=$TARGET" >> $GITHUB_ENV
+        echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
 
-    - name: Validate workspace access
+    - name: Deploy Bundle
       shell: bash
-      run: databricks workspace list /
-
-    - name: Validate bundle
-      shell: bash
-      run: databricks bundle validate --target $TARGET
-
-    - name: Deploy bundle
-      shell: bash
-      run: databricks bundle deploy --target $TARGET
+      run: |
+        cd DBX_Template
+        databricks bundle deploy --target "$TARGET"
