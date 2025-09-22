@@ -13,6 +13,7 @@ inputs:
   subscription-id:
     description: "Azure Subscription ID"
     required: true
+
 runs:
   using: "composite"
   steps:
@@ -22,3 +23,7 @@ runs:
         client-id: ${{ inputs.client-id }}
         tenant-id: ${{ inputs.tenant-id }}
         subscription-id: ${{ inputs.subscription-id }}
+
+    - name: Show logged in account (optional debug)
+      run: |
+        az account show
